@@ -4,11 +4,18 @@ const mongoose = require('mongoose');
 const morgan = require('morgan');
 const cors = require('cors');
 const redis = require('redis');
+const { performance } = require('perf_hooks');
 
 const app = express();
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors({ exposedHeaders: ['X-Query-Time-ms', 'X-Data-Source'] }));
+
+// Allow browsers to expose resource timing details for cross-origin requests
+app.use((req, res, next) => {
+  res.setHeader('Timing-Allow-Origin', '*');
+  next();
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -349,7 +356,7 @@ async function cacheSet(key, value, ttlSec = 10) {
 
 app.get('/bets', async (req, res) => {
   try {
-    const t0 = Date.now();
+    const t0 = performance.now();
     const cacheKey = 'bets:all';
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -359,8 +366,8 @@ app.get('/bets', async (req, res) => {
     }
     // use lean() so Mongoose returns plain JS objects (better for caching)
     const bets = await Bet.find().limit(200).sort({ vedon_pvm: -1 }).lean();
-    const t1 = Date.now();
-    res.set('X-Query-Time-ms', String(t1 - t0));
+    const t1 = performance.now();
+    res.set('X-Query-Time-ms', String((t1 - t0).toFixed(3)));
     res.set('X-Data-Source', 'mongo');
     cacheSet(cacheKey, bets);
     res.json(bets);
@@ -384,7 +391,7 @@ app.get('/bets/:id', async (req, res) => {
 // Routes for events
 app.get('/events', async (req, res) => {
   try {
-    const t0 = Date.now();
+    const t0 = performance.now();
     const cacheKey = 'events:all';
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -394,8 +401,8 @@ app.get('/events', async (req, res) => {
     }
     // return plain objects
     const events = await Event.find().limit(200).sort({ paiva: 1 }).lean();
-    const t1 = Date.now();
-    res.set('X-Query-Time-ms', String(t1 - t0));
+    const t1 = performance.now();
+    res.set('X-Query-Time-ms', String((t1 - t0).toFixed(3)));
     res.set('X-Data-Source', 'mongo');
     cacheSet(cacheKey, events);
     res.json(events);
@@ -419,7 +426,7 @@ app.get('/events/:id', async (req, res) => {
 // Routes for users
 app.get('/users', async (req, res) => {
   try {
-    const t0 = Date.now();
+    const t0 = performance.now();
     const cacheKey = 'users:all';
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -429,8 +436,8 @@ app.get('/users', async (req, res) => {
     }
     // return plain objects
     const users = await User.find().limit(200).sort({ nimi: 1 }).lean();
-    const t1 = Date.now();
-    res.set('X-Query-Time-ms', String(t1 - t0));
+    const t1 = performance.now();
+    res.set('X-Query-Time-ms', String((t1 - t0).toFixed(3)));
     res.set('X-Data-Source', 'mongo');
     cacheSet(cacheKey, users);
     res.json(users);
@@ -463,7 +470,7 @@ app.get('/top-events', async (req, res) => {
       return res.json({ mode, results: cached });
     }
 
-    const t0 = Date.now();
+    const t0 = performance.now();
     const pipeline = [
       {
         $group: {
@@ -507,8 +514,8 @@ app.get('/top-events', async (req, res) => {
     ];
 
     const results = await Bet.collection.aggregate(pipeline).toArray();
-    const t1 = Date.now();
-    res.set('X-Query-Time-ms', String(t1 - t0));
+    const t1 = performance.now();
+    res.set('X-Query-Time-ms', String((t1 - t0).toFixed(3)));
     res.set('X-Data-Source', 'mongo');
     cacheSet(cacheKey, results, 10);
     res.json({ mode, results });

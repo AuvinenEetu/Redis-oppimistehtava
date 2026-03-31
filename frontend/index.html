@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vedonlyönti frontend</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Vedonlyöntisovellus</h1>
+
+    <div style="margin-bottom:12px">
+      <button id="btnBets">Bets</button>
+      <button id="btnEvents">Events</button>
+      <button id="btnUsers">Users</button>
+      <button id="btnInit">Init sample</button>
+      <button id="btnTop">Top events</button>
+      <select id="topMode"><option value="count">By bets count</option><option value="stake">By total stake</option></select>
+    </div>
+
+    <div id="status" class="muted"></div>
+    <ul id="list"></ul>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
